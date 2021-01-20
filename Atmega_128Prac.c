@@ -23,7 +23,7 @@ void segment(unsigned int number)
     unsigned int Buff, i;
     unsigned char D1000, D100, D10, D1;
     
-    D1000 = number/1000; //천의 자
+    D1000 = number/1000; //천의 자리
     Buff = number % 1000; // 1000으로 나눈 나머지 값 저장
     D100 = Buff / 100; // 백의자리
     Buff = Buff % 100;  // 100으로 나눈 나머지 값 저장
@@ -34,7 +34,7 @@ void segment(unsigned int number)
     {
     S1; // 첫 번째 FND를 ON 시킨다.
     FND = Font[D1000]; // 천의 자리수를 출력한다.
-    delay_us(500);
+    delay_us(500);   // 500us 딜레이
     FND = 0xff;
     S2; // 두 번째 FND를 ON 시킨다.
     FND = Font[D100]; // 백의 자리수를 출력한다.
@@ -66,7 +66,8 @@ void main(void)
     while(1)
     {   
         count++;
-        segment(count);
-        if(count == 9999) count = 0;
+        if (count % 3 == 0)
+            segment(count);    
+
     }
 }

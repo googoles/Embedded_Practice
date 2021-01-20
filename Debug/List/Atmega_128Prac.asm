@@ -1247,7 +1247,7 @@ _segment:
 ; 0000 0017 unsigned int Buff, i;
 ; 0000 0018 unsigned char D1000, D100, D10, D1;
 ; 0000 0019 
-; 0000 001A D1000 = number/1000;
+; 0000 001A D1000 = number/1000; //천의 자리
 	ST   -Y,R27
 	ST   -Y,R26
 	SBIW R28,2
@@ -1262,29 +1262,29 @@ _segment:
 	RCALL SUBOPT_0x0
 	RCALL __DIVW21U
 	MOV  R21,R30
-; 0000 001B Buff = number % 1000;
+; 0000 001B Buff = number % 1000; // 1000으로 나눈 나머지 값 저장
 	RCALL SUBOPT_0x0
 	RCALL __MODW21U
 	MOVW R16,R30
-; 0000 001C D100 = Buff / 100;
+; 0000 001C D100 = Buff / 100; // 백의자리
 	MOVW R26,R16
 	LDI  R30,LOW(100)
 	LDI  R31,HIGH(100)
 	RCALL __DIVW21U
 	MOV  R20,R30
-; 0000 001D Buff = Buff % 100;
+; 0000 001D Buff = Buff % 100;  // 100으로 나눈 나머지 값 저장
 	MOVW R26,R16
 	LDI  R30,LOW(100)
 	LDI  R31,HIGH(100)
 	RCALL __MODW21U
 	MOVW R16,R30
-; 0000 001E D10 = Buff / 10;
+; 0000 001E D10 = Buff / 10;  // 십의자리
 	MOVW R26,R16
 	LDI  R30,LOW(10)
 	LDI  R31,HIGH(10)
 	RCALL __DIVW21U
 	STD  Y+7,R30
-; 0000 001F D1 = Buff % 10;
+; 0000 001F D1 = Buff % 10;   // 일의자리
 	MOVW R26,R16
 	LDI  R30,LOW(10)
 	LDI  R31,HIGH(10)
@@ -1305,7 +1305,7 @@ _0x5:
 ; 0000 0024 FND = Font[D1000]; // 천의 자리수를 출력한다.
 	MOV  R30,R21
 	RCALL SUBOPT_0x1
-; 0000 0025 delay_us(500);
+; 0000 0025 delay_us(500);   // 500us 딜레이
 ; 0000 0026 FND = 0xff;
 ; 0000 0027 S2; // 두 번째 FND를 ON 시킨다.
 	SBI  0x18,1
@@ -1381,21 +1381,21 @@ _0x2F:
 	MOVW R30,R4
 	ADIW R30,1
 	MOVW R4,R30
-; 0000 0045 segment(count);
+; 0000 0045 if (count % 3 == 0)
+	MOVW R26,R4
+	LDI  R30,LOW(3)
+	LDI  R31,HIGH(3)
+	RCALL __MODW21
+	SBIW R30,0
+	BRNE _0x32
+; 0000 0046 segment(count);
 	MOVW R26,R4
 	RCALL _segment
-; 0000 0046 if(count == 9999) count = 0;
-	LDI  R30,LOW(9999)
-	LDI  R31,HIGH(9999)
-	CP   R30,R4
-	CPC  R31,R5
-	BRNE _0x32
-	CLR  R4
-	CLR  R5
-; 0000 0047 }
+; 0000 0047 
+; 0000 0048 }
 _0x32:
 	RJMP _0x2F
-; 0000 0048 }
+; 0000 0049 }
 _0x33:
 	RJMP _0x33
 ; .FEND
@@ -1455,6 +1455,12 @@ __LOADLOCR2:
 	LD   R16,Y
 	RET
 
+__ANEGW1:
+	NEG  R31
+	NEG  R30
+	SBCI R31,0
+	RET
+
 __DIVW21U:
 	CLR  R0
 	CLR  R1
@@ -1482,6 +1488,24 @@ __DIVW21U3:
 __MODW21U:
 	RCALL __DIVW21U
 	MOVW R30,R26
+	RET
+
+__MODW21:
+	CLT
+	SBRS R27,7
+	RJMP __MODW211
+	NEG  R27
+	NEG  R26
+	SBCI R27,0
+	SET
+__MODW211:
+	SBRC R31,7
+	RCALL __ANEGW1
+	RCALL __DIVW21U
+	MOVW R30,R26
+	BRTC __MODW212
+	RCALL __ANEGW1
+__MODW212:
 	RET
 
 ;END OF CODE MARKER
